@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+ 
+{% block conteudo %}
+ 
+{% if errou %}
+ 
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-6 border rounded border-2 border-dark m-5 p-5 text-center">
+            <h1 class="text-center">Senha incorreta! Tente novamente!</h1>
+            <a href="{{url_for('login')}}" class="btn btn-danger btn-lg mt-5">Voltar</a>
+        </div>
+    </div>
+</div>
+ 
+{% else %}
+<div class="container-fluid">
+    <div class="row justify-content-center my-5">
+        <div class="col-4 border">
+            <h2 class="text-center my-4">Acesso a Loja</h2>
+ 
+            <div class="text-center mb-4">
+                <i class="bi bi-person-circle" style="font-size: 80px;"></i>
+            </div>
+ 
+            <div class="formularioLogin">
+                <form action="{{url_for('login')}}" method="post">
+                    <div class="mb-3">
+                        <label for="exampleInputEmail1" class="form-label">E-mail</label>
+                        <input name="email" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Digite seu e-mail">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleInputPassword1" class="form-label">Senha</label>
+                        <input name="senha" type="password" class="form-control" id="exampleInputPassword1" placeholder="Digite sua senha">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="exampleCheck1" name="lembrar">
+                        <label class="form-check-label" for="exampleCheck1">Lembrar me</label>
+                    </div>
+ 
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary w-50">Entrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+ 
+{% endif %}
+
+{% endblock %}
