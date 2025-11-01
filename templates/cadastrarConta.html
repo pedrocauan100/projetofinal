@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+ 
+{% block conteudo %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-6 border rounded p-4">
+            <h2 class="mb-4 text-center">Cadastro de Conta</h2>
+ 
+            {% if sucesso %}
+                <div class="alert alert-success" role="alert">
+                    Conta cadastrada com sucesso!
+                </div>
+            {% elif erro %}
+                <div class="alert alert-danger" role="alert">
+                    {{ erro }}
+                </div>
+            {% endif %}
+ 
+            <form action="{{ url_for('cadastrar_conta') }}" method="post">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="nome" name="nome" required>
+                </div>
+ 
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+ 
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="senha" name="senha" required>
+                </div>
+ 
+                <div class="mb-3">
+                    <label for="tipo" class="form-label">Tipo</label>
+                    <select class="form-select" id="tipo" name="tipo" required>
+                        <option value="usuario" selected>Usuário</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+ 
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary w-50">Cadastrar</button>
+                </div>
+                <div class="my-4">
+                    <a class="btn btn-danger" href="{{url_for('index')}}">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

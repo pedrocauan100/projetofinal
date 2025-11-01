@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+ 
+{% block conteudo %}
+ 
+{% if errou %}
+ 
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card card-custom border-danger mt-5">
+                <div class="card-body text-center p-5">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 4rem;"></i>
+                    <h1 class="text-danger mt-3">Senha incorreta!</h1>
+                    <p class="mt-3">Tente novamente com suas credenciais corretas.</p>
+                    <a href="{{url_for('login')}}" class="btn btn-custom btn-lg mt-3">Voltar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+{% else %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card card-custom">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h2 class="mb-0"><i></i>Acesso à Loja</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-circle text-primary" style="font-size: 80px;"></i>
+                    </div>
+ 
+                    <div class="formularioLogin">
+                        <form action="{{url_for('login')}}" method="post">
+                            <div class="mb-3">
+                                <label for="exampleInputEmail1" class="form-label fw-semibold">E-mail</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input name="email" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Digite seu e-mail" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="exampleInputPassword1" class="form-label fw-semibold">Senha</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input name="senha" type="password" class="form-control" id="exampleInputPassword1" placeholder="Digite sua senha" required>
+                                </div>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="exampleCheck1" name="lembrar">
+                                <label class="form-check-label" for="exampleCheck1">Lembrar-me</label>
+                            </div>
+ 
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-custom btn-lg w-100 py-2 fw-bold">Entrar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+ 
+{% endif %}
+
+{% endblock %}
