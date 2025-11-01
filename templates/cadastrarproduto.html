@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Painel do Administrador</h1>
+        <div>
+            <a href="{{ url_for('produtos') }}" class="btn btn-outline-primary me-2">Ver Loja</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+        </div>
+    </div>
+
+    <!-- Mensagens de flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulário de Cadastro -->
+    <div class="card mb-5">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Cadastrar Novo Produto</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nome" class="form-label">Nome do Produto</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="preco" class="form-label">Preço</label>
+                        <input type="number" class="form-control" id="preco" name="preco" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição</label>
+                    <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="imagem" class="form-label">URL da Imagem</label>
+                        <input type="url" class="form-control" id="imagem" name="imagem" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select name="tipo" class="form-select" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Alimentos Secos e Enlatados">Alimentos Secos e Enlatados</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Higiene e Limpeza">Higiene e Limpeza</option>
+                            <option value="Frios e Laticínios">Frios e Laticínios</option>
+                            <option value="Verduras e Frutas">Verduras e Frutas</option>
+                            <option value="Padaria e Confeitaria">Padaria e Confeitaria</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="validade" class="form-label">Data de Validade</label>
+                        <input type="date" class="form-control" id="validade" name="validade" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">Cadastrar Produto</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Produtos Cadastrados (Total: {{ produtos|length }})</h4>
+        </div>
+        <div class="card-body">
+            {% if produtos %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagem</th>
+                            <th>Nome</th>
+                            <th>Preço</th>
+                            <th>Tipo</th>
+                            <th>Validade</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produto in produtos %}
+                        <tr>
+                            <td>{{ produto.id }}</td>
+                            <td>
+                                <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" 
+                                     style="width: 50px; height: 50px; object-fit: contain;" 
+                                     onerror="this.src='https://via.placeholder.com/50?text=Imagem'">
+                            </td>
+                            <td>{{ produto.nome }}</td>
+                            <td>R$ {{ produto.preco }}</td>
+                            <td>{{ produto.tipo }}</td>
+                            <td>
+                                {% if produto.validade %}
+                                    {{ produto.validade.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('excluir_produto', id=produto.id) }}" method="POST" 
+                                      onsubmit="return confirm('Tem certeza que deseja excluir o produto \"{{ produto.nome }}\"?')"
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Nenhum produto cadastrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

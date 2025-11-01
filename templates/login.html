@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
- 
+
 {% block conteudo %}
- 
+
 {% if errou %}
- 
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -18,7 +18,7 @@
         </div>
     </div>
 </div>
- 
+
 {% else %}
 <div class="container my-5">
     <div class="row justify-content-center">
@@ -31,30 +31,35 @@
                     <div class="text-center mb-4">
                         <i class="bi bi-person-circle text-primary" style="font-size: 80px;"></i>
                     </div>
- 
+
                     <div class="formularioLogin">
                         <form action="{{url_for('login')}}" method="post">
                             <div class="mb-3">
                                 <label for="exampleInputEmail1" class="form-label fw-semibold">E-mail</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                    <input name="email" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Digite seu e-mail" required>
+                                    <input name="email" type="email" class="form-control" id="exampleInputEmail1"
+                                        aria-describedby="emailHelp" placeholder="Digite seu e-mail" required>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label for="exampleInputPassword1" class="form-label fw-semibold">Senha</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                    <input name="senha" type="password" class="form-control" id="exampleInputPassword1" placeholder="Digite sua senha" required>
+                                    <input name="senha" type="password" class="form-control" id="exampleInputPassword1"
+                                        placeholder="Digite sua senha" required>
                                 </div>
                             </div>
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="exampleCheck1" name="lembrar">
                                 <label class="form-check-label" for="exampleCheck1">Lembrar-me</label>
                             </div>
- 
+
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-custom btn-lg w-100 py-2 fw-bold">Entrar</button>
+                            </div>
+                            <div class="my-4">
+                                <a class="btn btn-danger" href="{{url_for('index')}}">Voltar</a>
                             </div>
                         </form>
                     </div>
@@ -63,8 +68,8 @@
         </div>
     </div>
 </div>
- 
- 
+
+
 {% endif %}
 
 {% endblock %}
