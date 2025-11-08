@@ -31,3 +31,12 @@ INSERT INTO produtos (nome, preco, descricao, imagem, tipo, validade) VALUES
 ('Queijo Mussarela Fatiado 1kg', 41.50, 'Queijo mussarela fatiado, ideal para lanches.', 'https://tb1304.vtexassets.com/arquivos/ids/208970-800-800?v=638918689676730000&width=800&height=800&aspect=true', 'Frios e Laticínios', '2025-10-15'),
 ('Banana', 4.29, 'Banana fresca, ideal para consumo.', 'https://vallefrutas.com.br/wp-content/uploads/banana-nanica.png', 'Verduras e Frutas', '2025-09-20'),
 ('Pão de Forma Tradicional 500g', 7.49, 'Pão de forma macio, ideal para o café da manhã.', 'https://mambodelivery.vtexassets.com/arquivos/ids/177010/pao-de-forma-tradicional-panco-500g.jpg?v=637883842820430000', 'Padaria e Confeitaria', '2025-09-10');
+
+CREATE TABLE IF NOT EXISTS comentarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produto_id INT,
+    usuario_email VARCHAR(200),
+    usuario_nome VARCHAR(100),
+    comentario TEXT,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -51,8 +51,8 @@ def login():
                 print(f"DEBUG: Tipo processado: '{user_type}'")
                 
                 if user_type == 'admin':
-                    print("DEBUG: Redirecionando para cadastrar_produto")
-                    return redirect(url_for('cadastrar_produto'))
+                    print("DEBUG: Redirecionando para admin")
+                    return redirect(url_for('admin'))
                 else:
                     print("DEBUG: Redirecionando para produtos")
                     return redirect(url_for('produtos'))
@@ -66,6 +66,23 @@ def login():
             return redirect(url_for('login'))
 
     return render_template('login.html', errou=False)
+
+@app.route('/admin')
+def admin():
+    print(f"DEBUG: Acessando /admin - Session: {dict(session)}")
+    
+    if 'usuario' not in session:
+        print("DEBUG: Usuário não está na session - redirecionando para login")
+        flash('Acesso não autorizado. Faça login como administrador.', 'error')
+        return redirect(url_for('login'))
+    
+    if session.get('tipo') != 'admin':
+        print(f"DEBUG: Tipo de usuário não é admin - Tipo: '{session.get('tipo')}'")
+        flash('Acesso não autorizado. Faça login como administrador.', 'error')
+        return redirect(url_for('login'))
+    
+    print("DEBUG: Renderizando admin.html")
+    return render_template('admin.html')
 
 @app.route('/cadastrar_conta', methods=['GET', 'POST'])
 def cadastrar_conta():
@@ -99,25 +116,13 @@ def cadastrar_conta():
 
 @app.route('/cadastrarproduto', methods=['GET', 'POST'])
 def cadastrar_produto():
-    print(f"DEBUG: Acessando cadastrar_produto - Session: {dict(session)}")
-    
     if 'usuario' not in session:
-        print("DEBUG: Usuário não está na session")
         flash('Acesso não autorizado. Faça login como administrador.', 'error')
         return redirect(url_for('login'))
     
     if session.get('tipo') != 'admin':
-        print(f"DEBUG: Tipo de usuário não é admin - Tipo: '{session.get('tipo')}'")
         flash('Acesso não autorizado. Faça login como administrador.', 'error')
         return redirect(url_for('login'))
-
-    # Buscar produtos existentes para exibir na lista
-    conexao = conectar_banco()
-    cursor = conexao.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM produtos ORDER BY id DESC")
-    produtos = cursor.fetchall()
-    cursor.close()
-    conexao.close()
 
     if request.method == 'POST':
         nome = request.form['nome']
@@ -148,7 +153,26 @@ def cadastrar_produto():
 
         return redirect(url_for('cadastrar_produto'))
 
-    return render_template('cadastrarproduto.html', produtos=produtos)
+    return render_template('cadastrarproduto.html')
+
+@app.route('/admin/produtos')
+def listar_produtos_admin():
+    if 'usuario' not in session:
+        flash('Acesso não autorizado. Faça login como administrador.', 'error')
+        return redirect(url_for('login'))
+    
+    if session.get('tipo') != 'admin':
+        flash('Acesso não autorizado. Faça login como administrador.', 'error')
+        return redirect(url_for('login'))
+
+    conexao = conectar_banco()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM produtos ORDER BY id DESC")
+    produtos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    return render_template('listarprodutos.html', produtos=produtos)
 
 @app.route('/produtos')
 def produtos():
@@ -178,15 +202,100 @@ def pagina_compra(id):
     conexao = conectar_banco()
     cursor = conexao.cursor(dictionary=True)
 
+    # Buscar produto
     cursor.execute("SELECT * FROM produtos WHERE id = %s", (id,))
     produto = cursor.fetchone()
+
+    if produto is None:
+        cursor.close()
+        conexao.close()
+        return "Produto não encontrado", 404
+
+    # Buscar comentários do produto - CORRIGIDO A FORMATAÇÃO DA DATA
+    cursor.execute("""
+        SELECT c.*, DATE_FORMAT(c.data_criacao, '%d/%m/%Y %H:%i') as data_formatada
+        FROM comentarios c 
+        WHERE c.produto_id = %s 
+        ORDER BY c.data_criacao DESC
+    """, (id,))
+    comentarios = cursor.fetchall()
+    
     cursor.close()
     conexao.close()
 
-    if produto is None:
-        return "Produto não encontrado", 404
+    return render_template('paginacompra.html', produto=produto, comentarios=comentarios)
 
-    return render_template('paginacompra.html', produto=produto)
+@app.route('/produto/<int:id>/comentario', methods=['POST'])
+def adicionar_comentario(id):
+    if 'usuario' not in session:
+        flash('Faça login para comentar.', 'error')
+        return redirect(url_for('login'))
+    
+    comentario_texto = request.form['comentario']
+    
+    if not comentario_texto.strip():
+        flash('Comentário não pode estar vazio.', 'error')
+        return redirect(url_for('pagina_compra', id=id))
+    
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO comentarios (produto_id, usuario_email, usuario_nome, comentario)
+            VALUES (%s, %s, %s, %s)
+        """, (id, session['usuario'], session['nome'], comentario_texto))
+        conexao.commit()
+        flash('Comentário adicionado com sucesso!', 'success')
+    except Exception as e:
+        print(f"DEBUG: Erro ao adicionar comentário: {e}")
+        flash('Erro ao adicionar comentário.', 'error')
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    return redirect(url_for('pagina_compra', id=id))
+
+@app.route('/comentario/<int:id>/excluir', methods=['POST'])
+def excluir_comentario(id):
+    if 'usuario' not in session:
+        flash('Acesso não autorizado.', 'error')
+        return redirect(url_for('login'))
+    
+    conexao = conectar_banco()
+    cursor = conexao.cursor(dictionary=True)
+    
+    try:
+        cursor.execute("""
+            SELECT c.*, p.nome as produto_nome 
+            FROM comentarios c 
+            JOIN produtos p ON c.produto_id = p.id 
+            WHERE c.id = %s
+        """, (id,))
+        comentario = cursor.fetchone()
+        
+        if comentario:
+            if comentario['usuario_email'] == session['usuario'] or session.get('tipo') == 'admin':
+                cursor.execute("DELETE FROM comentarios WHERE id = %s", (id,))
+                conexao.commit()
+                flash('Comentário excluído com sucesso!', 'success')
+            else:
+                flash('Acesso não autorizado para excluir este comentário.', 'error')
+        else:
+            flash('Comentário não encontrado.', 'error')
+            
+    except Exception as e:
+        print(f"DEBUG: Erro ao excluir comentário: {e}")
+        flash('Erro ao excluir comentário.', 'error')
+    finally:
+        cursor.close()
+        conexao.close()
+    
+    # Redirecionar de volta para a página do produto
+    if comentario:
+        return redirect(url_for('pagina_compra', id=comentario['produto_id']))
+    else:
+        return redirect(url_for('produtos'))
 
 @app.route('/produto/<int:id>/excluir', methods=['POST'])
 def excluir_produto(id):
@@ -202,7 +311,6 @@ def excluir_produto(id):
     cursor = conexao.cursor(dictionary=True)
 
     try:
-        # Primeiro busca o produto para mostrar o nome no feedback
         cursor.execute("SELECT nome FROM produtos WHERE id = %s", (id,))
         produto = cursor.fetchone()
         
@@ -220,7 +328,7 @@ def excluir_produto(id):
         cursor.close()
         conexao.close()
 
-    return redirect(url_for('cadastrar_produto'))
+    return redirect(url_for('listar_produtos_admin'))
 
 @app.route('/logout')
 def logout():

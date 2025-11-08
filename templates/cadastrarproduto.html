@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base2.html' %}
 
 {% block conteudo %}
 <div class="container mt-5">
@@ -6,11 +6,11 @@
         <h1>Painel do Administrador</h1>
         <div>
             <a href="{{ url_for('produtos') }}" class="btn btn-outline-primary me-2">Ver Loja</a>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary me-2">Voltar ao Painel</a>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
         </div>
     </div>
 
-    <!-- Mensagens de flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -22,7 +22,6 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Formulário de Cadastro -->
     <div class="card mb-5">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0">Cadastrar Novo Produto</h4>
@@ -71,61 +70,4 @@
             </form>
         </div>
     </div>
-
-    <div class="card">
-        <div class="card-header bg-secondary text-white">
-            <h4 class="mb-0">Produtos Cadastrados (Total: {{ produtos|length }})</h4>
-        </div>
-        <div class="card-body">
-            {% if produtos %}
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Imagem</th>
-                            <th>Nome</th>
-                            <th>Preço</th>
-                            <th>Tipo</th>
-                            <th>Validade</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for produto in produtos %}
-                        <tr>
-                            <td>{{ produto.id }}</td>
-                            <td>
-                                <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" 
-                                     style="width: 50px; height: 50px; object-fit: contain;" 
-                                     onerror="this.src='https://via.placeholder.com/50?text=Imagem'">
-                            </td>
-                            <td>{{ produto.nome }}</td>
-                            <td>R$ {{ produto.preco }}</td>
-                            <td>{{ produto.tipo }}</td>
-                            <td>
-                                {% if produto.validade %}
-                                    {{ produto.validade.strftime('%d/%m/%Y') }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
-                            <td>
-                                <form action="{{ url_for('excluir_produto', id=produto.id) }}" method="POST" 
-                                      onsubmit="return confirm('Tem certeza que deseja excluir o produto \"{{ produto.nome }}\"?')"
-                                      style="display: inline;">
-                                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-muted">Nenhum produto cadastrado.</p>
-            {% endif %}
-        </div>
-    </div>
-</div>
 {% endblock %}
