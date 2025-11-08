@@ -1,0 +1,93 @@
+{% extends 'base2.html' %}
+
+{% block conteudo %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Produtos Cadastrados</h1>
+        <div>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary me-2">Voltar ao Painel</a>
+            <a href="{{ url_for('cadastrar_produto') }}" class="btn btn-primary me-2">Cadastrar Novo</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Lista de Produtos (Total: {{ produtos|length }})</h4>
+        </div>
+        <div class="card-body">
+            {% if produtos %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagem</th>
+                            <th>Nome</th>
+                            <th>Preço</th>
+                            <th>Tipo</th>
+                            <th>Validade</th>
+                            <th>Data Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produto in produtos %}
+                        <tr>
+                            <td>{{ produto.id }}</td>
+                            <td>
+                                <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" 
+                                     style="width: 50px; height: 50px; object-fit: contain;" 
+                                     onerror="this.src='https://via.placeholder.com/50?text=Imagem'">
+                            </td>
+                            <td>{{ produto.nome }}</td>
+                            <td>R$ {{ produto.preco }}</td>
+                            <td>{{ produto.tipo }}</td>
+                            <td>
+                                {% if produto.validade %}
+                                    {{ produto.validade.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if produto.data_criacao %}
+                                    {{ produto.data_criacao.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{{ url_for('excluir_produto', id=produto.id) }}" method="POST" 
+                                      onsubmit="return confirm('Tem certeza que deseja excluir o produto \"{{ produto.nome }}\"?')"
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+                <p class="text-muted mt-3">Nenhum produto cadastrado.</p>
+                <a href="{{ url_for('cadastrar_produto') }}" class="btn btn-primary">Cadastrar Primeiro Produto</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
