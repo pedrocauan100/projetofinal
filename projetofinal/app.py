@@ -9,7 +9,7 @@ def conectar_banco():
     conexao = my.connect(
         host="localhost",
         user="root",
-        password="snoopy10",
+        password="1234",
         database="pedrosuperselect"
     )
     return conexao
@@ -331,7 +331,7 @@ def excluir_produto(id):
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logout realizado com sucesso!', 'success')
+    flash('Login realizado com sucesso!', 'success')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
