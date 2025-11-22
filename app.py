@@ -167,8 +167,28 @@ def listar_produtos_admin():
 
     conexao = conectar_banco()
     cursor = conexao.cursor(dictionary=True)
+    
     cursor.execute("SELECT * FROM produtos ORDER BY id DESC")
     produtos = cursor.fetchall()
+    
+    for produto in produtos:
+        cursor.execute("""
+            SELECT * FROM comentarios 
+            WHERE produto_id = %s 
+            ORDER BY data_criacao DESC
+        """, (produto['id'],))
+        comentarios = cursor.fetchall()
+        
+        # Formatar datas dos comentários
+        for comentario in comentarios:
+            if comentario['data_criacao']:
+                comentario['data_formatada'] = comentario['data_criacao'].strftime('%d/%m/%Y às %H:%M')
+            else:
+                comentario['data_formatada'] = 'Data não disponível'
+        
+        produto['comentarios'] = comentarios
+        produto['total_comentarios'] = len(comentarios) 
+    
     cursor.close()
     conexao.close()
 
@@ -202,7 +222,6 @@ def pagina_compra(id):
     conexao = conectar_banco()
     cursor = conexao.cursor(dictionary=True)
 
-    # Buscar produto
     cursor.execute("SELECT * FROM produtos WHERE id = %s", (id,))
     produto = cursor.fetchone()
 
@@ -211,7 +230,6 @@ def pagina_compra(id):
         conexao.close()
         return "Produto não encontrado", 404
 
-    # Buscar comentários do produto - CORRIGIDO A FORMATAÇÃO DA DATA
     cursor.execute("""
         SELECT c.*, DATE_FORMAT(c.data_criacao, '%d/%m/%Y %H:%i') as data_formatada
         FROM comentarios c 
@@ -291,7 +309,6 @@ def excluir_comentario(id):
         cursor.close()
         conexao.close()
     
-    # Redirecionar de volta para a página do produto
     if comentario:
         return redirect(url_for('pagina_compra', id=comentario['produto_id']))
     else:
@@ -333,7 +350,7 @@ def excluir_produto(id):
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Logout realizado com sucesso!', 'success')
+    flash('Login realizado com sucesso!', 'success')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':

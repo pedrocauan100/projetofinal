@@ -38,7 +38,7 @@
                             <th>Preço</th>
                             <th>Tipo</th>
                             <th>Validade</th>
-                            <th>Data Criação</th>
+                            <th>Comentários</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -62,10 +62,14 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if produto.data_criacao %}
-                                    {{ produto.data_criacao.strftime('%d/%m/%Y') }}
+                                {% if produto.total_comentarios > 0 %}
+                                    <button class="btn btn-info btn-sm" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#comentarios{{ produto.id }}" 
+                                            aria-expanded="false" aria-controls="comentarios{{ produto.id }}">
+                                        <i class="bi bi-chat-left-text"></i> Ver Comentários ({{ produto.total_comentarios }})
+                                    </button>
                                 {% else %}
-                                    N/A
+                                    <span class="text-muted">Nenhum comentário</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -76,6 +80,57 @@
                                 </form>
                             </td>
                         </tr>
+                        
+                        <!-- Linha expandível para comentários -->
+                        {% if produto.total_comentarios > 0 %}
+                        <tr class="collapse" id="comentarios{{ produto.id }}">
+                            <td colspan="8" class="p-0">
+                                <div class="p-3 bg-light">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-chat-left-text"></i> Comentários do produto "{{ produto.nome }}"
+                                    </h6>
+                                    <div class="comentarios-list">
+                                        {% for comentario in produto.comentarios %}
+                                        <div class="card mb-2">
+                                            <div class="card-body py-2">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <strong class="text-primary me-2">
+                                                                <i class="bi bi-person-circle"></i> {{ comentario.usuario_nome }}
+                                                            </strong>
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-clock"></i> 
+                                                                {% if comentario.data_criacao %}
+                                                                    {{ comentario.data_criacao.strftime('%d/%m/%Y às %H:%M') }}
+                                                                {% else %}
+                                                                    {{ comentario.data_formatada }}
+                                                                {% endif %}
+                                                            </small>
+                                                        </div>
+                                                        <p class="mb-1">{{ comentario.comentario }}</p>
+                                                        <small class="text-muted">
+                                                            Email: {{ comentario.usuario_email }}
+                                                        </small>
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <form action="{{ url_for('excluir_comentario', id=comentario.id) }}" method="POST" 
+                                                              onsubmit="return confirm('Tem certeza que deseja excluir este comentário?')">
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                                    title="Excluir comentário">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
@@ -90,4 +145,14 @@
         </div>
     </div>
 </div>
+
+<style>
+.comentarios-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.collapse-row {
+    background-color: #f8f9fa;
+}
+</style>
 {% endblock %}
