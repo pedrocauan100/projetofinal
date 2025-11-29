@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 import mysql.connector as my
-from datetime import datetime
+from datetime import datetime, timedelta
+from urllib.parse import unquote
 
 app = Flask(__name__)
 app.secret_key = 'minha_chave_secreta'  
@@ -67,6 +68,44 @@ def login():
 
     return render_template('login.html', errou=False)
 
+def verificar_produtos_vencendo():
+    conexao = conectar_banco()
+    if not conexao:
+        return []
+    
+    cursor = conexao.cursor(dictionary=True)
+    
+    data_limite = datetime.now().date() + timedelta(days=7)
+    
+    cursor.execute("""
+        SELECT nome, validade, DATEDIFF(validade, CURDATE()) as dias_para_vencer
+        FROM produtos 
+        WHERE validade IS NOT NULL 
+        AND validade <= %s
+        AND validade >= CURDATE()
+        ORDER BY validade ASC
+        LIMIT 10
+    """, (data_limite,))
+    
+    produtos_vencendo = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    
+    return produtos_vencendo
+
+def contar_produtos_vencidos():
+    conexao = conectar_banco()
+    if not conexao:
+        return 0
+    
+    cursor = conexao.cursor()
+    cursor.execute("SELECT COUNT(*) FROM produtos WHERE validade IS NOT NULL AND validade < CURDATE()")
+    count = cursor.fetchone()[0]
+    cursor.close()
+    conexao.close()
+    
+    return count
+
 @app.route('/admin')
 def admin():
     print(f"DEBUG: Acessando /admin - Session: {dict(session)}")
@@ -81,8 +120,46 @@ def admin():
         flash('Acesso não autorizado. Faça login como administrador.', 'error')
         return redirect(url_for('login'))
     
-    print("DEBUG: Renderizando admin.html")
-    return render_template('admin.html')
+    conexao = conectar_banco()
+    cursor = conexao.cursor(dictionary=True)
+    
+    cursor.execute("SELECT COUNT(*) as total FROM produtos")
+    total_produtos = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM comentarios")
+    total_comentarios = cursor.fetchone()['total']
+    
+    cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+    total_usuarios = cursor.fetchone()['total']
+    
+    cursor.close()
+    conexao.close()
+    
+    produtos_vencendo = verificar_produtos_vencendo()
+    produtos_vencidos = contar_produtos_vencidos()
+    
+    print("DEBUG: Renderizando admin.html com estatísticas e notificações")
+    return render_template('admin.html', 
+                         total_produtos=total_produtos,
+                         total_comentarios=total_comentarios,
+                         total_usuarios=total_usuarios,
+                         produtos_vencendo=produtos_vencendo,
+                         produtos_vencidos=produtos_vencidos,
+                         now=datetime.now())
+    
+@app.route('/api/notificacoes')
+def api_notificacoes():
+    if 'usuario' not in session or session.get('tipo') != 'admin':
+        return {'error': 'Não autorizado'}, 401
+    
+    produtos_vencendo = verificar_produtos_vencendo()
+    produtos_vencidos = contar_produtos_vencidos()
+    
+    return {
+        'produtos_vencendo': produtos_vencendo,
+        'produtos_vencidos': produtos_vencidos,
+        'timestamp': datetime.now().isoformat()
+    }
 
 @app.route('/cadastrar_conta', methods=['GET', 'POST'])
 def cadastrar_conta():
@@ -192,7 +269,7 @@ def listar_produtos_admin():
     cursor.close()
     conexao.close()
 
-    return render_template('listarprodutos.html', produtos=produtos)
+    return render_template('listarprodutos.html', produtos=produtos, now=datetime.now())
 
 @app.route('/produtos')
 def produtos():
@@ -200,22 +277,34 @@ def produtos():
         flash('Faça login para acessar os produtos.', 'error')
         return redirect(url_for('login'))
 
-    print(f"DEBUG: Usuário {session['usuario']} acessando produtos")
-    
+    termo = request.args.get('q', '')
+    tipo_filtro = request.args.get('tipo', '')
+
     conexao = conectar_banco()
     cursor = conexao.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM produtos")
+    query = "SELECT * FROM produtos WHERE 1=1"
+    params = []
+
+    if termo:
+        query += " AND (nome LIKE %s OR descricao LIKE %s)"
+        params.extend([f'%{termo}%', f'%{termo}%'])
+
+    if tipo_filtro:
+        query += " AND tipo = %s"
+        params.append(tipo_filtro)
+
+    query += " ORDER BY nome"
+    
+    cursor.execute(query, params)
     produtos = cursor.fetchall()
     cursor.close()
     conexao.close()
 
-    print(f"DEBUG: {len(produtos)} produtos carregados do banco")
-    
-    for produto in produtos:
-        print(f"DEBUG Produto: {produto['nome']} - Imagem: {produto['imagem']}")
-
-    return render_template('produtos.html', produtos=produtos)
+    return render_template('produtos.html', 
+                         produtos=produtos, 
+                         termo_busca=termo,
+                         tipo_filtro=tipo_filtro)    
 
 @app.route('/produto/<int:id>')
 def pagina_compra(id):
@@ -273,6 +362,57 @@ def adicionar_comentario(id):
         conexao.close()
     
     return redirect(url_for('pagina_compra', id=id))
+
+@app.route('/produtos/buscar')
+def buscar_produtos():
+    if 'usuario' not in session:
+        flash('Faça login para acessar os produtos.', 'error')
+        return redirect(url_for('login'))
+
+    termo = request.args.get('q', '')
+    tipo_filtro = request.args.get('tipo', '')
+    preco_min = request.args.get('preco_min', '')
+    preco_max = request.args.get('preco_max', '')
+
+    conexao = conectar_banco()
+    cursor = conexao.cursor(dictionary=True)
+
+    query = "SELECT * FROM produtos WHERE 1=1"
+    params = []
+
+    if termo:
+        query += " AND (nome LIKE %s OR descricao LIKE %s)"
+        params.extend([f'%{termo}%', f'%{termo}%'])
+
+    if tipo_filtro:
+        query += " AND tipo = %s"
+        params.append(tipo_filtro)
+
+    if preco_min:
+        query += " AND preco >= %s"
+        params.append(float(preco_min))
+
+    if preco_max:
+        query += " AND preco <= %s"
+        params.append(float(preco_max))
+
+    query += " ORDER BY nome"
+    
+    cursor.execute(query, params)
+    produtos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    return render_template('produtos.html', 
+                         produtos=produtos, 
+                         termo_busca=termo,
+                         tipo_filtro=tipo_filtro,
+                         preco_min=preco_min,
+                         preco_max=preco_max)
+
+@app.route('/produtos/limpar-filtros')
+def limpar_filtros():
+    return redirect(url_for('produtos'))
 
 @app.route('/comentario/<int:id>/excluir', methods=['POST'])
 def excluir_comentario(id):
@@ -350,7 +490,7 @@ def excluir_produto(id):
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Login realizado com sucesso!', 'success')
+    flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('login'))
 
 if __name__ == '__main__':

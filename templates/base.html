@@ -80,13 +80,69 @@
 <body>
 
     <div class="top-footer">
-        <div class="logo">SuperSelect</div>
+    <div class="logo">SuperSelect</div>
+    <div class="d-flex align-items-center">
+        <form action="{{ url_for('buscar_produtos') }}" method="GET" class="me-2">
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" placeholder="Buscar..." name="q" 
+                       style="width: 150px;">
+                <button class="btn btn-outline-light" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
         <a href="{{ url_for('cadastrar_conta') }}" class="btn btn-light btn-sm fw-bold">Cadastrar conta</a>
     </div>
+</div>
 
     {% block conteudo %}
     {% endblock %}
+
+    <!-- Modal de Feedback para usar com o flash -->
+    <div class="modal fade" id="modalFeedback" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="modal-title">Aviso</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <p id="modalFeedbackMsg" class="text-dark"></p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
     
 </body>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      let mensagens = [];
+      {% for category, msg in messages %}
+        mensagens.push("{{ msg }}");
+      {% endfor %}
+
+      const modalMsg = document.getElementById("modalFeedbackMsg");
+      modalMsg.innerHTML = mensagens.join("<br>");
+
+      const modalFeedback = new bootstrap.Modal(document.getElementById("modalFeedback"));
+      modalFeedback.show();
+    {% endif %}
+    {% endwith %}
+
+  });
+</script>
+
 </html>

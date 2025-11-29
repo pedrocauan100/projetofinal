@@ -17,6 +17,89 @@
         </div>
     </div>
 
+    <!-- Sistema de Busca e Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ url_for('buscar_produtos') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="q" class="form-label">Buscar Produtos</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="q" name="q" 
+                               placeholder="Digite o nome do produto..." 
+                               value="{{ termo_busca or '' }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtro por Tipo -->
+                <div class="col-md-3">
+                    <label for="tipo" class="form-label">Filtrar por Tipo</label>
+                    <select class="form-select" id="tipo" name="tipo">
+                        <option value="">Todos os tipos</option>
+                        <option value="Alimentos Secos e Enlatados" 
+                                {% if tipo_filtro == 'Alimentos Secos e Enlatados' %}selected{% endif %}>
+                            Alimentos Secos
+                        </option>
+                        <option value="Bebidas" 
+                                {% if tipo_filtro == 'Bebidas' %}selected{% endif %}>
+                            Bebidas
+                        </option>
+                        <option value="Higiene e Limpeza" 
+                                {% if tipo_filtro == 'Higiene e Limpeza' %}selected{% endif %}>
+                            Higiene e Limpeza
+                        </option>
+                        <option value="Frios e Laticínios" 
+                                {% if tipo_filtro == 'Frios e Laticínios' %}selected{% endif %}>
+                            Frios e Laticínios
+                        </option>
+                        <option value="Verduras e Frutas" 
+                                {% if tipo_filtro == 'Verduras e Frutas' %}selected{% endif %}>
+                            Verduras e Frutas
+                        </option>
+                        <option value="Padaria e Confeitaria" 
+                                {% if tipo_filtro == 'Padaria e Confeitaria' %}selected{% endif %}>
+                            Padaria
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="filtrar"></i> Filtrar
+                        </button>
+                        {% if termo_busca or tipo_filtro or preco_min or preco_max %}
+                        <a href="{{ url_for('limpar_filtros') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Limpar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>
+            {% if termo_busca or tipo_filtro or preco_min or preco_max %}
+                Resultados da busca 
+                {% if termo_busca %}({{ termo_busca }}){% endif %}
+                - {{ produtos|length }} produto(s) encontrado(s)
+            {% else %}
+                Todos os Produtos ({{ produtos|length }})
+            {% endif %}
+        </h5>
+        
+        {% if termo_busca or tipo_filtro or preco_min or preco_max %}
+        <a href="{{ url_for('limpar_filtros') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="vertodos"></i> Ver todos
+        </a>
+        {% endif %}
+    </div>
+
+    {% if produtos %}
     <div class="row">
         {% for produto in produtos %}
         <div class="col-md-4 mb-4">
@@ -48,6 +131,21 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-search" style="font-size: 4rem; color: #6c757d;"></i>
+        <h4 class="text-muted mt-3">
+            {% if termo_busca or tipo_filtro%}
+                Nenhum produto encontrado.
+            {% else %}
+                Nenhum produto cadastrado.
+            {% endif %}
+        </h4>
+        {% if termo_busca or tipo_filtro %}
+        <p class="text-muted">Tente ajustar os filtros ou <a href="{{ url_for('limpar_filtros') }}">ver todos os produtos</a>.</p>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
  
 {% endblock %}

@@ -44,14 +44,23 @@
                     </thead>
                     <tbody>
                         {% for produto in produtos %}
-                        <tr>
+                        <!-- Corrigido: usando now.date() em vez de today -->
+                        <tr class="{% if produto.validade and produto.validade < now.date() %}table-danger{% elif produto.validade and (produto.validade - now.date()).days <= 7 %}table-warning{% endif %}">
                             <td>{{ produto.id }}</td>
                             <td>
                                 <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" 
                                      style="width: 50px; height: 50px; object-fit: contain;" 
                                      onerror="this.src='https://via.placeholder.com/50?text=Imagem'">
                             </td>
-                            <td>{{ produto.nome }}</td>
+                            <td>
+                                {{ produto.nome }}
+                                <!-- Corrigido: usando now.date() em vez de today -->
+                                {% if produto.validade and produto.validade < now.date() %}
+                                    <span class="badge bg-danger ms-1">Vencido</span>
+                                {% elif produto.validade and (produto.validade - now.date()).days <= 7 %}
+                                    <span class="badge bg-warning ms-1">Vence em {{ (produto.validade - now.date()).days }} dias</span>
+                                {% endif %}
+                            </td>
                             <td>R$ {{ produto.preco }}</td>
                             <td>{{ produto.tipo }}</td>
                             <td>
